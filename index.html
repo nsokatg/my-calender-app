@@ -30,13 +30,11 @@
         <button id="theme-toggle-btn">🌙 ダークモード</button>
     </div>
 
-    <!-- フィルターツールバー -->
+    <!-- カレンダーソース別フィルターツールバー -->
     <div id="filter-toolbar" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-        <span style="font-weight: bold;">表示フィルター:</span>
-        <label><input type="checkbox" class="category-filter" value="private" checked> プライベート</label>
-        <label><input type="checkbox" class="category-filter" value="work" checked> 仕事</label>
-        <label><input type="checkbox" class="category-filter" value="study" checked> 勉強</label>
-        <label><input type="checkbox" class="category-filter" value="health" checked> 健康</label>
+        <span style="font-weight: bold;">カレンダーフィルター:</span>
+        <label><input type="checkbox" class="source-filter" value="google" checked> Googleカレンダー</label>
+        <label><input type="checkbox" class="source-filter" value="outlook" checked> Outlookカレンダー</label>
     </div>
 
     <div id="calendar-container">
@@ -87,7 +85,9 @@
     </div>
 
     <script>
+        // ▼▼ ご自身のGASのウェブアプリURLに書き換えてください ▼▼
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzbcj5HMD4ajIjUv5FWCJukPozBBu2JaYiNSDBR7Hb_Xx08znJkpTXOIdjR9k0RyvV5yg/exec';
+
         const categoryColors = {
             private: { bg: '#28a745', border: '#1e7e34' },
             work:    { bg: '#0078d4', border: '#005a9e' },
@@ -98,7 +98,7 @@
         let calendarInstance, currentSelectedEvent = null;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // テーマ切替
+            // ダークモード切替
             const savedTheme = localStorage.getItem('theme');
             const themeBtn = document.getElementById('theme-toggle-btn');
             if (savedTheme === 'dark') { document.body.classList.add('dark-mode'); themeBtn.textContent = '☀️ ライトモード'; }
@@ -141,12 +141,12 @@
             });
             calendarInstance.render();
 
-            // フィルター変更
-            document.querySelectorAll('.category-filter').forEach(cb => {
+            // ソースフィルター変更時のイベント
+            document.querySelectorAll('.source-filter').forEach(cb => {
                 cb.addEventListener('change', applyFilters);
             });
 
-            // 新規登録フォーム
+            // 新規登録フォーム送信
             document.getElementById('event-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 sendData({
@@ -192,6 +192,11 @@
                         data.events.forEach(ev => {
                             const cat = ev.category || 'private';
                             const col = categoryColors[cat] || categoryColors.private;
+                            
+                            // カレンダー名に Outlook が含まれているかでソース判定
+                            const isOutlook = ev.calendarName.toLowerCase().includes('outlook');
+                            const sourceType = isOutlook ? 'outlook' : 'google';
+
                             calendarInstance.addEvent({
                                 title: `[${ev.calendarName}] ${ev.title}`,
                                 start: ev.startTime,
@@ -199,7 +204,7 @@
                                 allDay: ev.isAllDay,
                                 backgroundColor: col.bg,
                                 borderColor: col.border,
-                                extendedProps: { category: cat }
+                                extendedProps: { sourceType: sourceType }
                             });
                         });
                         applyFilters();
@@ -209,10 +214,14 @@
         }
 
         function applyFilters() {
-            const active = Array.from(document.querySelectorAll('.category-filter:checked')).map(cb => cb.value);
+            const activeSources = Array.from(document.querySelectorAll('.source-filter:checked')).map(cb => cb.value);
             calendarInstance.getEvents().forEach(ev => {
-                const cat = ev.extendedProps.category || 'private';
-                ev.setProp('display', active.includes(cat) ? 'auto' : 'none');
+                const sourceType = ev.extendedProps.sourceType || 'google';
+                if (activeSources.includes(sourceType)) {
+                    ev.setProp('display', 'auto');
+                } else {
+                    ev.setProp('display', 'none');
+                }
             });
         }
 
