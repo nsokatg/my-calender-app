@@ -86,7 +86,7 @@
 
     <script>
         // ▼▼ ご自身のGASのウェブアプリURLに書き換えてください ▼▼
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzbcj5HMD4ajIjUv5FWCJukPozBBu2JaYiNSDBR7Hb_Xx08znJkpTXOIdjR9k0RyvV5yg/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycby-N-_2EUDHfyoJ7XEvq9plbHkh8Vz8GNqViWq5J5YaZnPC5IwIsaUajgeoEchqeVHoYw/exec';
 
         const categoryColors = {
             private: { bg: '#28a745', border: '#1e7e34' },
@@ -125,7 +125,7 @@
                     calendarInstance.unselect();
                 },
                 eventClick: function(info) {
-                    if (info.event.title.includes('Outlook')) {
+                    if (info.event.extendedProps.sourceType === 'outlook') {
                         alert('Outlook（仕事用）の予定はOutlook側で変更してください。');
                         return;
                     }
@@ -193,9 +193,8 @@
                             const cat = ev.category || 'private';
                             const col = categoryColors[cat] || categoryColors.private;
                             
-                            // カレンダー名に Outlook が含まれているかでソース判定
-                            const isOutlook = ev.calendarName.toLowerCase().includes('outlook');
-                            const sourceType = isOutlook ? 'outlook' : 'google';
+                            // GAS側から送られてきた sourceType を利用する
+                            const sourceType = ev.sourceType || 'google';
 
                             calendarInstance.addEvent({
                                 title: `[${ev.calendarName}] ${ev.title}`,
