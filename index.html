@@ -197,7 +197,7 @@
                             const sourceType = ev.sourceType || 'google';
 
                             calendarInstance.addEvent({
-                                title: `[${ev.calendarName}] ${ev.title}`,
+                                title: ev.title, // ← カレンダー名を省き、入力したタイトルのみを表示
                                 start: ev.startTime,
                                 end: ev.endTime,
                                 allDay: ev.isAllDay,
